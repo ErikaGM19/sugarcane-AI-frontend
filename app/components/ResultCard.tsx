@@ -1,0 +1,120 @@
+import { ClassifyResponse } from "../types"
+import { CheckCircle, AlertTriangle } from "lucide-react"
+
+const DISEASE_COLORS: Record<string, { bg: string; text: string }> = {
+  "Hoja Sana":          { bg: "var(--accent-light)", text: "var(--accent)" },
+  "Roya":               { bg: "#fff8e1", text: "#e65100" },
+  "Carbón":             { bg: "#f5f5f5", text: "#424242" },
+  "Mosaico":            { bg: "#fffde7", text: "#f9a825" },
+  "Hoja Amarilla":      { bg: "#fffde7", text: "#f57f17" },
+  "Pudrición Roja":     { bg: "#ffebee", text: "#c62828" },
+  "Tizón Bacteriano":   { bg: "#fff3e0", text: "#e65100" },
+  "Mancha Parda":       { bg: "#fff8e1", text: "#bf360c" },
+  "Mancha de Anillo":   { bg: "#f3e5f5", text: "#6a1b9a" },
+  "Hoja Seca":          { bg: "#efebe9", text: "#4e342e" },
+}
+
+interface Props {
+  result: ClassifyResponse
+}
+
+export default function ResultCard({ result }: Props) {
+  const { prediction } = result
+  const colors = DISEASE_COLORS[prediction.class] ?? { bg: "var(--accent-light)", text: "var(--accent)" }
+  const isHealthy = prediction.class === "Hoja Sana"
+  const confidence = Math.round(prediction.confidence * 100)
+
+  const top3 = Object.entries(prediction.all_probabilities)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+
+  const barColor =
+    confidence > 80
+      ? "var(--accent)"
+      : confidence > 50
+      ? "#e65100"
+      : "#c62828"
+
+  return (
+    <div className="bg-card rounded-2xl border border-border p-6 space-y-5 shadow-sm">
+      {/* Header diagnóstico */}
+      <div className="flex items-center gap-3">
+        {isHealthy ? (
+          <CheckCircle style={{ color: "var(--accent)" }} size={24} />
+        ) : (
+          <AlertTriangle style={{ color: "#e65100" }} size={24} />
+        )}
+        <div>
+          <p className="text-xs uppercase tracking-wide" style={{ color: "var(--accent-mid)" }}>
+            Diagnóstico
+          </p>
+          <span
+            className="inline-block mt-1 px-3 py-1 rounded-full text-sm font-medium"
+            style={{ background: colors.bg, color: colors.text }}
+          >
+            {prediction.class}
+          </span>
+        </div>
+        {prediction.simulated && (
+          <span
+            className="ml-auto text-xs px-2 py-1 rounded-full"
+            style={{ background: "var(--accent-light)", color: "var(--accent-mid)" }}
+          >
+            Simulado
+          </span>
+        )}
+      </div>
+
+      {/* Barra de confianza */}
+      <div>
+        <div className="flex justify-between text-sm mb-1">
+          <span style={{ color: "var(--accent-mid)" }}>Confianza</span>
+          <span className="font-medium" style={{ color: "var(--foreground)" }}>
+            {confidence}%
+          </span>
+        </div>
+        <div className="w-full rounded-full h-2" style={{ background: "var(--accent-light)" }}>
+          <div
+            className="h-2 rounded-full transition-all"
+            style={{ width: `${confidence}%`, background: barColor }}
+          />
+        </div>
+      </div>
+
+      {/* Otras probabilidades */}
+      <div>
+        <p className="text-xs uppercase tracking-wide mb-2" style={{ color: "var(--accent-mid)" }}>
+          Otras probabilidades
+        </p>
+        <div className="space-y-2">
+          {top3.map(([cls, prob]) => (
+            <div key={cls} className="flex items-center gap-2 text-sm">
+              <span className="w-36 truncate" style={{ color: "var(--foreground)" }}>
+                {cls}
+              </span>
+              <div
+                className="flex-1 rounded-full h-1.5"
+                style={{ background: "var(--accent-light)" }}
+              >
+                <div
+                  className="h-1.5 rounded-full"
+                  style={{
+                    width: `${Math.round(prob * 100)}%`,
+                    background: "var(--accent)",
+                  }}
+                />
+              </div>
+              <span className="text-xs w-8 text-right" style={{ color: "var(--accent-mid)" }}>
+                {Math.round(prob * 100)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-xs" style={{ color: "var(--accent-mid)" }}>
+        Archivo: {result.filename}
+      </p>
+    </div>
+  )
+}
