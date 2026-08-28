@@ -1,14 +1,16 @@
 import { ClassifyResponse } from "../types"
-import { CheckCircle, AlertTriangle } from "lucide-react"
+import { CheckCircle, AlertTriangle, Bug, HelpCircle, ClipboardList } from "lucide-react"
 
+// Nombres normalizados sin tilde, para que coincidan exactamente con lo que
+// envía el backend (ver CLASS_NAMES en app/services/model.py).
 const DISEASE_COLORS: Record<string, { bg: string; text: string }> = {
   "Hoja Sana":          { bg: "var(--accent-light)", text: "var(--accent)" },
   "Roya":               { bg: "#fff8e1", text: "#e65100" },
-  "Carbón":             { bg: "#f5f5f5", text: "#424242" },
+  "Carbon":             { bg: "#f5f5f5", text: "#424242" },
   "Mosaico":            { bg: "#fffde7", text: "#f9a825" },
   "Hoja Amarilla":      { bg: "#fffde7", text: "#f57f17" },
-  "Pudrición Roja":     { bg: "#ffebee", text: "#c62828" },
-  "Tizón Bacteriano":   { bg: "#fff3e0", text: "#e65100" },
+  "Pudricion Roja":     { bg: "#ffebee", text: "#c62828" },
+  "Tizon Bacteriano":   { bg: "#fff3e0", text: "#e65100" },
   "Mancha Parda":       { bg: "#fff8e1", text: "#bf360c" },
   "Mancha de Anillo":   { bg: "#f3e5f5", text: "#6a1b9a" },
   "Hoja Seca":          { bg: "#efebe9", text: "#4e342e" },
@@ -19,7 +21,7 @@ interface Props {
 }
 
 export default function ResultCard({ result }: Props) {
-  const { prediction } = result
+  const { prediction, disease_info } = result
   const colors = DISEASE_COLORS[prediction.class] ?? { bg: "var(--accent-light)", text: "var(--accent)" }
   const isHealthy = prediction.class === "Hoja Sana"
   const confidence = Math.round(prediction.confidence * 100)
@@ -110,6 +112,57 @@ export default function ResultCard({ result }: Props) {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Información complementaria generada por el módulo LLM */}
+      <div className="pt-2 border-t" style={{ borderColor: "var(--border-color)" }}>
+        <p className="text-xs uppercase tracking-wide mb-3" style={{ color: "var(--accent-mid)" }}>
+          Información complementaria
+        </p>
+
+        <div className="space-y-3">
+          <div className="flex items-start gap-2">
+            <Bug size={16} className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
+            <div>
+              <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>
+                Síntomas
+              </p>
+              <p className="text-sm" style={{ color: "var(--accent-mid)" }}>
+                {disease_info.sintomas}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2">
+            <HelpCircle size={16} className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
+            <div>
+              <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>
+                Causas
+              </p>
+              <p className="text-sm" style={{ color: "var(--accent-mid)" }}>
+                {disease_info.causas}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2">
+            <ClipboardList size={16} className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
+            <div>
+              <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>
+                Recomendaciones
+              </p>
+              <p className="text-sm" style={{ color: "var(--accent-mid)" }}>
+                {disease_info.recomendaciones}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {!disease_info.generated && (
+          <p className="text-xs mt-3 italic" style={{ color: "#c62828" }}>
+            Esta información no pudo generarse automáticamente. Intenta nuevamente más tarde.
+          </p>
+        )}
       </div>
 
       <p className="text-xs" style={{ color: "var(--accent-mid)" }}>
