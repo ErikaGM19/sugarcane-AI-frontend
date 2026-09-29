@@ -2,7 +2,6 @@ export interface Prediction {
   class: string
   confidence: number
   all_probabilities: Record<string, number>
-  simulated: boolean
 }
 
 export interface DiseaseInfo {
@@ -10,6 +9,7 @@ export interface DiseaseInfo {
   causas: string
   recomendaciones: string
   generated: boolean
+  recognized?: boolean
 }
 
 export interface ClassifyResponse {

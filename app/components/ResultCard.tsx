@@ -57,14 +57,6 @@ export default function ResultCard({ result }: Props) {
             {prediction.class}
           </span>
         </div>
-        {prediction.simulated && (
-          <span
-            className="ml-auto text-xs px-2 py-1 rounded-full"
-            style={{ background: "var(--accent-light)", color: "var(--accent-mid)" }}
-          >
-            Simulado
-          </span>
-        )}
       </div>
 
       {/* Barra de confianza */}
@@ -158,11 +150,15 @@ export default function ResultCard({ result }: Props) {
           </div>
         </div>
 
-        {!disease_info.generated && (
+        {disease_info.recognized === false ? (
+          <p className="text-xs mt-3 italic" style={{ color: "#c62828" }}>
+            No se pudo identificar la enfermedad con suficiente confianza. Verifica que la imagen corresponda a una hoja de caña de azúcar.
+          </p>
+        ) : !disease_info.generated ? (
           <p className="text-xs mt-3 italic" style={{ color: "#c62828" }}>
             Esta información no pudo generarse automáticamente. Intenta nuevamente más tarde.
           </p>
-        )}
+        ) : null}
       </div>
 
       <p className="text-xs" style={{ color: "var(--accent-mid)" }}>
