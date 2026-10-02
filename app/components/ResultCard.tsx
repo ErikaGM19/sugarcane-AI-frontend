@@ -121,53 +121,55 @@ export default function ResultCard({ result }: Props) {
           Información complementaria
         </p>
 
-        <div className="space-y-3">
-          <div className="flex items-start gap-2">
-            <Bug size={16} className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
-            <div>
-              <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>
-                Síntomas
-              </p>
-              <p className="text-sm" style={{ color: "var(--accent-mid)" }}>
-                {disease_info.sintomas}
-              </p>
+        {isRecognized ? (
+          <div className="space-y-3">
+            <div className="flex items-start gap-2">
+              <Bug size={16} className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
+              <div>
+                <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>
+                  Síntomas
+                </p>
+                <p className="text-sm" style={{ color: "var(--accent-mid)" }}>
+                  {disease_info.sintomas}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <HelpCircle size={16} className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
+              <div>
+                <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>
+                  Causas
+                </p>
+                <p className="text-sm" style={{ color: "var(--accent-mid)" }}>
+                  {disease_info.causas}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <ClipboardList size={16} className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
+              <div>
+                <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>
+                  Recomendaciones
+                </p>
+                <p className="text-sm" style={{ color: "var(--accent-mid)" }}>
+                  {disease_info.recomendaciones}
+                </p>
+              </div>
             </div>
           </div>
-
-          <div className="flex items-start gap-2">
-            <HelpCircle size={16} className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
-            <div>
-              <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>
-                Causas
-              </p>
-              <p className="text-sm" style={{ color: "var(--accent-mid)" }}>
-                {disease_info.causas}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2">
-            <ClipboardList size={16} className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
-            <div>
-              <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>
-                Recomendaciones
-              </p>
-              <p className="text-sm" style={{ color: "var(--accent-mid)" }}>
-                {disease_info.recomendaciones}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {disease_info.recognized === false ? (
-          <p className="text-xs mt-3 italic" style={{ color: "#c62828" }}>
-            No se pudo identificar la enfermedad con suficiente confianza. Verifica que la imagen corresponda a una hoja de caña de azúcar.
+        ) : (
+          <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: "var(--accent-mid)" }}>
+            {disease_info.mensaje || "La imagen no parece corresponder a una hoja de caña de azúcar."}
           </p>
-        ) : !disease_info.generated ? (
+        )}
+
+        {!disease_info.generated && (
           <p className="text-xs mt-3 italic" style={{ color: "#c62828" }}>
             Esta información no pudo generarse automáticamente. Intenta nuevamente más tarde.
           </p>
-        ) : null}
+        )}
       </div>
 
       <p className="text-xs" style={{ color: "var(--accent-mid)" }}>

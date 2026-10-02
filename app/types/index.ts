@@ -8,6 +8,7 @@ export interface DiseaseInfo {
   sintomas: string
   causas: string
   recomendaciones: string
+  mensaje?: string
   generated: boolean
   recognized?: boolean
 }
