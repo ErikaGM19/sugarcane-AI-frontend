@@ -24,6 +24,7 @@ export default function ResultCard({ result }: Props) {
   const { prediction, disease_info } = result
   const colors = DISEASE_COLORS[prediction.class] ?? { bg: "var(--accent-light)", text: "var(--accent)" }
   const isHealthy = prediction.class === "Hoja Sana"
+  const isRecognized = disease_info.recognized !== false
   const confidence = Math.round(prediction.confidence * 100)
 
   const top3 = Object.entries(prediction.all_probabilities)
@@ -59,52 +60,60 @@ export default function ResultCard({ result }: Props) {
         </div>
       </div>
 
-      {/* Barra de confianza */}
-      <div>
-        <div className="flex justify-between text-sm mb-1">
-          <span style={{ color: "var(--accent-mid)" }}>Confianza</span>
-          <span className="font-medium" style={{ color: "var(--foreground)" }}>
-            {confidence}%
-          </span>
-        </div>
-        <div className="w-full rounded-full h-2" style={{ background: "var(--accent-light)" }}>
-          <div
-            className="h-2 rounded-full transition-all"
-            style={{ width: `${confidence}%`, background: barColor }}
-          />
-        </div>
-      </div>
-
-      {/* Otras probabilidades */}
-      <div>
-        <p className="text-xs uppercase tracking-wide mb-2" style={{ color: "var(--accent-mid)" }}>
-          Otras probabilidades
-        </p>
-        <div className="space-y-2">
-          {top3.map(([cls, prob]) => (
-            <div key={cls} className="flex items-center gap-2 text-sm">
-              <span className="w-36 truncate" style={{ color: "var(--foreground)" }}>
-                {cls}
-              </span>
-              <div
-                className="flex-1 rounded-full h-1.5"
-                style={{ background: "var(--accent-light)" }}
-              >
-                <div
-                  className="h-1.5 rounded-full"
-                  style={{
-                    width: `${Math.round(prob * 100)}%`,
-                    background: "var(--accent)",
-                  }}
-                />
-              </div>
-              <span className="text-xs w-8 text-right" style={{ color: "var(--accent-mid)" }}>
-                {Math.round(prob * 100)}%
+      {/* Barra de confianza y otras probabilidades:
+          solo se muestran cuando la imagen fue reconocida como una hoja
+          válida. Si no lo fue, estos valores provienen de que ResNet50
+          siempre reparte probabilidad entre sus 10 clases conocidas
+          (por el uso de Softmax), aunque la imagen no corresponda a
+          ninguna de ellas, por lo que mostrarlos induciría a confusión. */}
+      {isRecognized && (
+        <>
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span style={{ color: "var(--accent-mid)" }}>Confianza</span>
+              <span className="font-medium" style={{ color: "var(--foreground)" }}>
+                {confidence}%
               </span>
             </div>
-          ))}
-        </div>
-      </div>
+            <div className="w-full rounded-full h-2" style={{ background: "var(--accent-light)" }}>
+              <div
+                className="h-2 rounded-full transition-all"
+                style={{ width: `${confidence}%`, background: barColor }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs uppercase tracking-wide mb-2" style={{ color: "var(--accent-mid)" }}>
+              Otras probabilidades
+            </p>
+            <div className="space-y-2">
+              {top3.map(([cls, prob]) => (
+                <div key={cls} className="flex items-center gap-2 text-sm">
+                  <span className="w-36 truncate" style={{ color: "var(--foreground)" }}>
+                    {cls}
+                  </span>
+                  <div
+                    className="flex-1 rounded-full h-1.5"
+                    style={{ background: "var(--accent-light)" }}
+                  >
+                    <div
+                      className="h-1.5 rounded-full"
+                      style={{
+                        width: `${Math.round(prob * 100)}%`,
+                        background: "var(--accent)",
+                      }}
+                    />
+                  </div>
+                  <span className="text-xs w-8 text-right" style={{ color: "var(--accent-mid)" }}>
+                    {Math.round(prob * 100)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Información complementaria generada por el módulo LLM */}
       <div className="pt-2 border-t" style={{ borderColor: "var(--border-color)" }}>

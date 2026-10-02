@@ -3,9 +3,6 @@ import { useAuthStore } from '../store/authStore';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 api.interceptors.request.use(
@@ -13,6 +10,12 @@ api.interceptors.request.use(
     const accessToken = useAuthStore.getState().accessToken;
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    // Si la solicitud envía FormData, nos aseguramos de que no tenga un Content-Type fijo
+    // para que el navegador/cliente configure automáticamente 'multipart/form-data; boundary=...'
+    if (config.data instanceof FormData && config.headers) {
+      delete (config.headers as Record<string, unknown>)['Content-Type'];
+      delete (config.headers as Record<string, unknown>)['content-type'];
     }
     return config;
   },

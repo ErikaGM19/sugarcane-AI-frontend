@@ -5,14 +5,8 @@ export async function classifyImage(file: File): Promise<ClassifyResponse> {
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await api.post<ClassifyResponse>(
-    "/classify",
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  )
+  const response = await api.post<ClassifyResponse>("/classify", formData, {
+    timeout: 120_000, // 2 minutos para imágenes grandes o conexiones lentas
+  })
   return response.data
 }

@@ -1,17 +1,18 @@
 "use client"
 
 import { useCallback, useState } from "react"
-import { useDropzone } from "react-dropzone"
+import { useDropzone, FileRejection } from "react-dropzone"
 import { UploadCloud, Image as ImageIcon, X } from "lucide-react"
 import Image from "next/image"
 
 interface Props {
   onFileSelected: (file: File) => void
   onClear?: () => void
+  onError?: (errorMessage: string) => void
   loading: boolean
 }
 
-export default function ImageUploader({ onFileSelected, onClear, loading }: Props) {
+export default function ImageUploader({ onFileSelected, onClear, onError, loading }: Props) {
   const [preview, setPreview] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
 
@@ -19,16 +20,59 @@ export default function ImageUploader({ onFileSelected, onClear, loading }: Prop
     (accepted: File[]) => {
       const file = accepted[0]
       if (!file) return
+
+      // Validación defensiva de tamaño en el cliente (30MB)
+      if (file.size > 30 * 1024 * 1024) {
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1)
+        if (onError) {
+          onError(`La imagen seleccionada pesa ${sizeMb}MB y supera el límite de 30MB permitidos.`)
+        }
+        return
+      }
+
       setPreview(URL.createObjectURL(file))
       setFileName(file.name)
       onFileSelected(file)
     },
-    [onFileSelected]
+    [onFileSelected, onError]
+  )
+
+  const onDropRejected = useCallback(
+    (fileRejections: FileRejection[]) => {
+      const rejection = fileRejections[0]
+      if (!rejection) return
+
+      const err = rejection.errors[0]
+      let msg = "El archivo seleccionado no es válido."
+
+      if (err?.code === "file-too-large") {
+        const sizeMb = (rejection.file.size / (1024 * 1024)).toFixed(1)
+        msg = `La imagen pesa ${sizeMb}MB y supera el límite máximo de 30MB. Por favor sube una imagen más liviana.`
+      } else if (err?.code === "file-invalid-type") {
+        msg = `Formato no admitido (${rejection.file.type || "archivo desconocido"}). Se aceptan imágenes JPG, PNG, WEBP, GIF, BMP y TIFF.`
+      } else if (err?.message) {
+        msg = err.message
+      }
+
+      if (onError) {
+        onError(msg)
+      }
+    },
+    [onError]
   )
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { "image/jpeg": [], "image/png": [], "image/webp": [] },
+    onDropRejected,
+    accept: {
+      "image/jpeg": [".jpg", ".jpeg", ".jfif"],
+      "image/png": [".png"],
+      "image/webp": [".webp"],
+      "image/gif": [".gif"],
+      "image/bmp": [".bmp"],
+      "image/tiff": [".tif", ".tiff"],
+    },
+    maxSize: 30 * 1024 * 1024,
     maxFiles: 1,
     disabled: loading,
   })
@@ -85,7 +129,7 @@ export default function ImageUploader({ onFileSelected, onClear, loading }: Prop
             o selecciona un archivo desde tu dispositivo
           </p>
           <p className="text-sm mt-1" style={{ color: "var(--accent-mid)", opacity: 0.7 }}>
-            JPG, PNG o WEBP — máx. 5MB
+            JPG, PNG, WEBP, GIF, BMP, TIFF — máx. 30MB
           </p>
 
           <button

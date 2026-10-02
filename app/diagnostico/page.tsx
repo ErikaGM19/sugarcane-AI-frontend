@@ -1,31 +1,50 @@
 "use client"
 
 import { useState } from "react"
-import { Info } from "lucide-react"
+import { Info, AlertCircle, RefreshCw, X, LogIn } from "lucide-react"
+import Link from "next/link"
 import ImageUploader from "../components/ImageUploader"
 import ResultCard from "../components/ResultCard"
 import PhotoTips from "../components/PhotoTips"
 import { classifyImage } from "../lib/api"
+import { parseApiError, ParsedError } from "../lib/errorUtils"
 import { ClassifyResponse } from "../types"
 
 export default function DiagnosticoPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<ClassifyResponse | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<ParsedError | null>(null)
+  const [lastFile, setLastFile] = useState<File | null>(null)
 
   const handleFile = async (file: File) => {
     setLoading(true)
     setResult(null)
     setError(null)
+    setLastFile(file)
 
     try {
       const data = await classifyImage(file)
       setResult(data)
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error al conectar con el servidor"
-      setError(msg)
+      const parsed = parseApiError(err)
+      setError(parsed)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleUploadError = (message: string) => {
+    setError({
+      title: "Archivo no admitido",
+      message: message,
+      actionHint: "Selecciona una fotografía en formato JPG, PNG, WEBP, GIF, BMP o TIFF con un peso menor a 30MB.",
+      status: 400,
+    })
+  }
+
+  const retry = () => {
+    if (lastFile) {
+      handleFile(lastFile)
     }
   }
 
@@ -56,9 +75,11 @@ export default function DiagnosticoPage() {
         <div className="relative z-10">
           <ImageUploader
             onFileSelected={handleFile}
+            onError={handleUploadError}
             onClear={() => {
               setResult(null)
               setError(null)
+              setLastFile(null)
             }}
             loading={loading}
           />
@@ -82,9 +103,62 @@ export default function DiagnosticoPage() {
 
         {/* Error state */}
         {error && (
-          <div className="mt-6 bg-red-50 border border-red-200 rounded-2xl p-4 text-red-600 text-sm flex items-center gap-2 relative z-10">
-            <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
-            {error}
+          <div
+            className="mt-6 bg-red-50 border border-red-200 rounded-2xl p-5 text-red-900 relative z-10 animate-in fade-in duration-300"
+            role="alert"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <h3 className="font-semibold text-sm text-red-800">
+                    {error.title}
+                  </h3>
+                  <p className="text-sm text-red-700 leading-relaxed">
+                    {error.message}
+                  </p>
+                  {error.actionHint && (
+                    <p className="text-xs text-red-600/90 pt-1">
+                      💡 {error.actionHint}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setError(null)}
+                className="text-red-400 hover:text-red-700 transition-colors p-1"
+                title="Cerrar notificación"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Acciones contextuales */}
+            <div className="mt-4 flex flex-wrap gap-2 pt-2 border-t border-red-200/60">
+              {error.status === 401 ? (
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors shadow-sm"
+                >
+                  <LogIn size={14} />
+                  Iniciar sesión
+                </Link>
+              ) : (
+                lastFile && (
+                  <button
+                    type="button"
+                    onClick={retry}
+                    disabled={loading}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white text-red-700 hover:bg-red-100/70 border border-red-300 transition-colors"
+                  >
+                    <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+                    Reintentar análisis
+                  </button>
+                )
+              )}
+            </div>
           </div>
         )}
 
